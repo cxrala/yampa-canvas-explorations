@@ -1,0 +1,42 @@
+cabal-version:      2.4
+name:               yampa-canvas-explorations
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+synopsis:           learning how yampa and blank-canvas works
+
+-- A longer description of the package.
+description:        A few toy programs implemented using yampa-blank-canvas.
+                    Everything is commented to be as readable as possible (at least, for myself).
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             cxrala
+maintainer:         ameliang123@gmail.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+executable yampa-canvas-explorations
+    main-is:          Main.hs
+    ghc-options:      -threaded
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base                >= 4.7  && < 4.20,
+                      blank-canvas        >= 0.5  && < 0.8,
+                      simple-affine-space >= 0.1  && < 0.3,
+                      text                >= 1.1  && < 2.2,
+                      Yampa               >= 0.13 && < 0.15,
+                      yampa-canvas,
+                      simple-affine-space
+    hs-source-dirs:   app
+    default-language: Haskell2010
