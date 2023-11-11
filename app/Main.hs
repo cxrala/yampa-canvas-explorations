@@ -8,6 +8,8 @@ import Data.AffineSpace
 import Data.Point2
 import Graphics.Blank hiding (Event)
 import qualified Graphics.Blank as Blank
+import Data.Text as Text
+import qualified Data.Text as Text
 
 -- main = blankCanvas 3000 $ \context -> do -- start blank canvas on port 3000
 --         send context $ do                 -- send commands to this specific context
@@ -17,15 +19,19 @@ import qualified Graphics.Blank as Blank
 --                 lineWidth 3
 --                 stroke()                  -- this draws the ink into the canvas
 
-newtype MouseEvent = Mousedown (Point2 Double)
+data MouseEvent = Mousedown (Point2 Double) | Mousemove (Point2 Double) | Mouseup (Point2 Double)
+    deriving (Show)
 
 ------------------------------------------------
 
 main :: IO ()
-main = blankCanvas 3000 { events = ["mousedown", "mouseup"] } createLine
+main = blankCanvas 3000 { events = ["mousedown", "mouseup", "mousemove"] } createLine
 
 createLine  :: DeviceContext -> IO ()
-createLine = reactimateSFinContext detectMousedown renderScene createPixel
+createLine = reactimateSFinContext detectMousedown (console_log . Text.pack . show) $ sscan f NoEvent
+    where f e1 NoEvent = e1
+          f (Event (Mouseup x)) (Event (Mousemove _)) = Event (Mouseup x)
+          f _ e2 = e2
 
 ------------------------------------------------
 
@@ -91,8 +97,12 @@ data PixelPoint = MkPixelPoint {
 
 -- probably specify here that it's actually a mousedown event (case eType)
 detectMousedown :: Blank.Event -> Canvas (Event MouseEvent)
-detectMousedown ev = if eType ev == "mouseup" then return NoEvent else
+detectMousedown ev =
     case ePageXY ev of
         Nothing -> return NoEvent
-        Just (x, y) -> return (Event $ Mousedown $ Point2 x y)
+        Just (x, y) -> return
+                            (case eType ev of
+                                "mousedown" -> Event $ Mousedown $ Point2 x y
+                                "mouseup" -> Event $ Mouseup $ Point2 x y
+                                "mousemove" -> Event $ Mousemove $ Point2 x y)
 
