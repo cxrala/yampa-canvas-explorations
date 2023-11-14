@@ -28,34 +28,47 @@ main :: IO ()
 main = blankCanvas 3000 { events = ["mousedown", "mouseup", "mousemove"] } createLine
 
 createLine  :: DeviceContext -> IO ()
-createLine = reactimateSFinContext detectMousedown (console_log . Text.pack . show) $ sscan f NoEvent
-    where f e1 NoEvent = e1
-          f (Event (Mouseup x)) (Event (Mousemove _)) = Event (Mouseup x)
-          f _ e2 = e2
+createLine = reactimateSFinContext detectMousedown renderScene createPixel
 
 ------------------------------------------------
 
 -- construct a pixel model that responds to input events by adding new pixels
 createPixel :: SF (Event MouseEvent) [PixelPoint]
-createPixel = pixelGenerator >>> pixelCollection []
+createPixel = idk >>> pixelGenerator >>> pixelCollection []
+
+-- sscan i guess?
+idk :: SF (Event MouseEvent) (Event MouseEvent)
+idk = sscan f NoEvent
+        where 
+            f e1 NoEvent = e1
+            f (Event (Mouseup x)) (Event (Mousemove _)) = Event (Mouseup x)
+            f _ e2 = e2 
 
 -- a collection of already drawn pixels into which new pixels can be drawn
-pixelCollection :: [SF (Event PixelPoint) PixelPoint] -> SF (Event PixelPoint) [PixelPoint]
-pixelCollection pixels = notYet >>> pSwitchB pixels (arr fst) (\sfs p -> pixelCollection (stationaryBall p : sfs))
+pixelCollection :: [SF (Event (Maybe PixelPoint)) PixelPoint] -> SF (Event (Maybe PixelPoint)) [PixelPoint]
+pixelCollection pixel = notYet >>> pSwitchB pixel (arr fst) (\sfs p ->
+                                                                    case p of
+                                                                        Nothing -> pixelCollection sfs
+                                                                        Just p' -> pixelCollection (stationaryBall p' : sfs))
 
 stationaryBall :: forall x. PixelPoint -> SF x PixelPoint
 stationaryBall p = arr (const p)
 
 -- convert events carrying co-ordinates into events carrying new pixels
-pixelGenerator :: SF (Event MouseEvent) (Event PixelPoint)
+pixelGenerator :: SF (Event MouseEvent) (Event (Maybe PixelPoint))
 pixelGenerator = arr (fmap newPixelAt)
 
 -- create a new pixel at the specific point
-newPixelAt :: MouseEvent -> PixelPoint
-newPixelAt (Mousedown p) = MkPixelPoint {
+newPixelAt :: MouseEvent -> Maybe PixelPoint
+newPixelAt (Mousedown p) = Just MkPixelPoint {
         pos     = p,
         size    = 1
 }
+newPixelAt (Mousemove p) = Just MkPixelPoint {
+        pos     = p,
+        size    = 1
+}
+newPixelAt (Mouseup p) = Nothing
 
 ------------------------------------------------
 
