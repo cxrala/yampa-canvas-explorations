@@ -54,3 +54,18 @@ executable line-modification
                       simple-affine-space
     hs-source-dirs:   app
     default-language: Haskell2010
+
+executable buffer-modification
+    main-is:          BufferModification.hs
+    ghc-options:      -threaded
+
+    build-depends:    base                >= 4.7  && < 4.20,
+                      blank-canvas        >= 0.5  && < 0.8,
+                      simple-affine-space >= 0.1  && < 0.3,
+                      text                >= 1.1  && < 2.2,
+                      Yampa               >= 0.13 && < 0.15,
+                      yampa-canvas,
+                      simple-affine-space,
+                      hip
+    hs-source-dirs:   app
+    default-language: Haskell2010

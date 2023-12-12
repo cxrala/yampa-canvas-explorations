@@ -14,25 +14,22 @@ import Data.Text as Text
 import qualified Data.Text as Text
 import GHC.TypeLits (Div)
 
--- main :: IO ()
--- main = blankCanvas 3000 $ \context -> do -- start blank canvas on port 3000
---         send context $ do                 -- send commands to this specific context
---                 beginPath()
---                 moveTo(50,50)
---                 lineTo(200,100)
---                 lineWidth 3
---                 stroke()                  -- this draws the ink into the canvas
+--------- setup ---------
 
 main :: IO ()
 main = 
     let options = 3000 { events = ["mousedown", "mouseup", "mousemove"] } in
     blankCanvas options draw
 
+draw :: DeviceContext -> IO ()
+draw = reactimateSFinContext detectMousedown renderScene (fmap linesDrawn eventsToState)
+
+--------- Data  ---------
+
+-- defining the events the SF 
 data MouseEvent = Mousedown (Point2 Double) | Mousemove (Point2 Double) | Mouseup (Point2 Double)
 newtype Line = Line (Point2 Double, Point2 Double)
 
-draw :: DeviceContext -> IO ()
-draw = reactimateSFinContext detectMousedown renderScene (fmap linesDrawn eventsToState)
 
 -----------------------------------
 -- signal function, SF (Event MouseEvent) (Maybe Line)
@@ -51,26 +48,6 @@ eventsToState = sscan updateState (State False undefined [])
                   linesDrawn = Line (lastMousePos state, p) : linesDrawn state
               }
               _ -> state
-
-{-
-createLine :: SF (Event MouseEvent) [Line]
-createLine = statefulEvent >>> foo
-
-foo :: SF (Event MouseEvent) [Line]
-foo = sscan f []
-        where
-            f ls (Event (Mousemoved l)) = l:ls
-            f ls _ = ls
-
-statefulEvent :: SF (Event MouseEvent) (Event MouseEvent)
-statefulEvent = sscan f NoEvent
-                    where
-                        f e1 NoEvent = e1
-                        f (Event (Mouseup x)) (Event (Mousemove _)) = Event (Mouseup x)
-                        f (Event (Mousemove x)) (Event (Mousemove y)) = Event $ Mousemoved $ Line (x, y)
-                        f (Event (Mousemoved (Line (_, x)))) (Event (Mousemove y)) = Event $ Mousemoved $ Line (x, y)
-                        f _ e2 = e2
--}
 
 -----------------------------------
 -- actuate, Maybe Line -> Canvas()
