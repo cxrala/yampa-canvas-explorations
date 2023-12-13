@@ -1,6 +1,9 @@
-module PixelCanvas (
-ColouredPixel,
-canvasBuilder
+{-# LANGUAGE RankNTypes #-}
+
+module Buffer.PixelCanvas (
+ColouredPixel(..),
+canvasBuilder,
+setPixel
 ) where
 
 import Data.Word (Word8)
@@ -11,6 +14,7 @@ import Data.Vector.Unboxed.Mutable (MVector)
 import Data.Vector.Unboxed (Vector)
 import GHC.Float.RealFracMethods
 import Control.Monad.ST
+import Control.Monad.Primitive
 import Graphics.Blank hiding (Event)
 
 data ColouredPixel = ColouredPixel {
@@ -23,8 +27,8 @@ data ColouredPixel = ColouredPixel {
 
 -- builds an empty ImageData (ie an empty buffer)
 canvasBuilder :: Int -> Int -> ImageData
-canvasBuilder height width = 
-    ImageData height width $ VU.replicate (h * w * 4) (fromIntegral 0)
+canvasBuilder h w = 
+    ImageData h w $ VU.replicate (h * w * 4) (fromIntegral 0)
 
 -- 2d coordinate to row-major rgba index START point (stride is 4)
 vecIndexFromPoint :: Point2 Double -> Int -> Int
@@ -32,14 +36,14 @@ vecIndexFromPoint (Point2 x y) width =
     let stride = 4 in (floorDoubleInt x) * stride + (floorDoubleInt y) * stride * width
 
 -- runs op on a vector, giving you a new vector. this is safe (but O(n))
-inPlace :: (forall s. MVector (PrimState (ST s)) a -> ST s ()) -> Vector a -> Vector a
+inPlace :: VU.Unbox a => (forall s. MVector (PrimState (ST s)) a -> ST s ()) -> Vector a -> Vector a
 inPlace op vec = runST $ do
     mv <- VU.thaw vec
     op mv
-    V.freeze mv
+    VU.freeze mv
 
 -- writes a coloured pixel into a mutable vector at index i
-writeColouredPixel :: ColouredPixel -> Int -> MVector (PrimState (ST s)) a -> ST s ()
+writeColouredPixel :: forall s. ColouredPixel -> Int -> MVector (PrimState (ST s)) Word8 -> ST s ()
 writeColouredPixel pixel i mvec = do
     MVU.write mvec i $ r pixel
     MVU.write mvec (i + 1) $ g pixel
@@ -49,5 +53,5 @@ writeColouredPixel pixel i mvec = do
 -- sets a value at a specific coordinate to a pixel
 setPixel :: ColouredPixel -> Point2 Double -> ImageData -> ImageData
 setPixel pixel coord (ImageData w h d) =
-    let v = inPlace $ writeColouredPixel pixel vecIndexFromPoint coord $ d in
+    let v = inPlace (writeColouredPixel pixel $ vecIndexFromPoint coord w) d in
     ImageData w h v

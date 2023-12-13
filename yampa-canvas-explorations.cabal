@@ -66,6 +66,8 @@ executable buffer-modification
                       Yampa               >= 0.13 && < 0.15,
                       yampa-canvas,
                       simple-affine-space,
-                      hip
+                      vector,
+                      primitive
+    other-modules:    Buffer.PixelCanvas
     hs-source-dirs:   app
     default-language: Haskell2010
