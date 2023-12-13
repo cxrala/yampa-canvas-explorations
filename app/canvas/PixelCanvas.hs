@@ -1,4 +1,7 @@
-module PixelCanvas where
+module PixelCanvas (
+ColouredPixel,
+canvasBuilder
+) where
 
 import Data.Word (Word8)
 import Data.Point2
@@ -10,12 +13,6 @@ import GHC.Float.RealFracMethods
 import Control.Monad.ST
 import Graphics.Blank hiding (Event)
 
-
-data PixelCanvas = PixelCanvas {
-    height  :: Int,
-    width   :: Int
-} deriving (Show)
-
 data ColouredPixel = ColouredPixel {
     -- values constrained from 0 to 255
     r       :: Word8,
@@ -24,10 +21,9 @@ data ColouredPixel = ColouredPixel {
     a       :: Word8
 } deriving (Show)
 
-
 -- builds an empty ImageData (ie an empty buffer)
-canvasBuilder :: PixelCanvas -> ImageData
-canvasBuilder PixelCanvas{height, width} = 
+canvasBuilder :: Int -> Int -> ImageData
+canvasBuilder height width = 
     ImageData height width $ VU.replicate (h * w * 4) (fromIntegral 0)
 
 -- 2d coordinate to row-major rgba index START point (stride is 4)
